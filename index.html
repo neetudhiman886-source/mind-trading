@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quantum Trade: Mega Terminal (250+ Assets)</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --panel-bg: #161b22;
+            --accent-blue: #58a6ff;
+            --neon-green: #39d353;
+            --neon-red: #f85149;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 20px;
+            background-image: 
+                radial-gradient(at 20% 20%, rgba(88, 166, 255, 0.05) 0px, transparent 50%),
+                radial-gradient(at 80% 80%, rgba(57, 211, 83, 0.03) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--panel-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+
+        h1 {
+            color: var(--accent-blue);
+            font-size: 24px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .stats-container {
+            display: flex;
+            gap: 30px;
+        }
+
+        .stat-box {
+            text-align: right;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        #cash { color: var(--neon-green); }
+        #portfolio-val { color: var(--accent-blue); }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid #30363d;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        .table-wrapper {
+            max-height: 600px;
+            overflow-y: auto;
+            border: 1px solid #21262d;
+            border-radius: 4px;
+        }
+
+        h2 {
+            font-size: 16px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 5px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th, td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #21262d;
+            font-size: 13px;
+        }
+
+        th {
+            color: var(--text-muted);
+            font-size: 11px;
+            text-transform: uppercase;
+            position: sticky;
+            top: 0;
+            background: var(--panel-bg);
+            z-index: 10;
+        }
+
+        .price-up { color: var(--neon-green); }
+        .price-down { color: var(--neon-red); }
+
+        .btn {
+            background: transparent;
+            border: 1px solid;
+            padding: 4px 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: inherit;
+            border-radius: 4px;
+            transition: all 0.2s;
+            font-size: 11px;
+        }
+
+        .btn-buy { border-color: var(--neon-green); color: var(--neon-green); }
+        .btn-buy:hover { background: rgba(57, 211, 83, 0.1); }
+
+        .btn-sell { border-color: var(--neon-red); color: var(--neon-red); }
+        .btn-sell:hover { background: rgba(248, 81, 73, 0.1); }
+
+        .btn-add { border-color: var(--accent-blue); color: var(--accent-blue); width: 100%; padding: 10px; margin-top: 10px;}
+        .btn-add:hover { background: rgba(88, 166, 255, 0.1); }
+
+        .ticker { font-weight: bold; color: #fff; }
+
+        #timer-container { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+        #countdown { color: var(--accent-blue); font-weight: bold; }
+
+        .log-container {
+            height: 120px;
+            overflow-y: auto;
+            font-size: 12px;
+            background: #0d1117;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #21262d;
+        }
+
+        .log-entry {
+            margin-bottom: 6px;
+            border-left: 2px solid var(--accent-blue);
+            padding-left: 6px;
+        }
+
+        .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        input {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            border-radius: 4px;
+            color: #fff;
+            padding: 8px;
+            font-family: inherit;
+            width: 100%;
+        }
+        input:focus { outline: none; border-color: var(--accent-blue); }
+        
+        .search-box {
+            margin-bottom: 15px;
+            width: 100%;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div>
+            <h1>Quantum Trade // Mega Terminal</h1>
+            <div id="timer-container">Market Ticker Loop (250+ Stocks) | Next Tick: <span id="countdown">30s</span></div>
+        </div>
+        <div class="stats-container">
+            <div class="stat-box">
+                <div class="stat-label">Virtual Cash</div>
+                <div id="cash" class="stat-value">$1,000,000.00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Portfolio Value</div>
+                <div id="portfolio-val" class="stat-value">$0.00</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-label">Total Net Worth</div>
+                <div id="net-worth" class="stat-value">$1,000,000.00</div>
+            </div>
+        </div>
+    </header>
+
+    <div class="main-layout">
+        <div class="panel">
+            <h2>Live Stock Market</h2>
+            <input type="text" id="search-stock" class="search-box" placeholder="🔍 Type Ticker or Company Name to filter..." oninput="updateMarketDOM()">
+            
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Company Name</th>
+                            <th>Price</th>
+                            <th>Change</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="market-table-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            
+            <div class="panel">
+                <h2>Listing Portal (Add Custom)</h2>
+                <div class="input-group">
+                    <input type="text" id="new-ticker" placeholder="Ticker (e.g., ZOMATO)" maxlength="7" style="text-transform: uppercase;">
+                    <input type="text" id="new-name" placeholder="Company Name">
+                </div>
+                <div class="input-group">
+                    <input type="number" id="new-price" placeholder="Initial Price ($)" step="0.01" min="1">
+                </div>
+                <button class="btn btn-add" onclick="addNewStock()">List Asset on Exchange</button>
+            </div>
+
+            <div class="panel">
+                <h2>Your Holdings</h2>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Ticker</th>
+                                <th>Shares</th>
+                                <th>Value</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="portfolio-table-body">
+                            <tr>
+                                <td colspan="4" style="color: var(--text-muted); text-align: center;">No assets held.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="panel">
+                <h2>Activity Log</h2>
+                <div class="log-container" id="log-box">
+                    <div class="log-entry" style="border-color: var(--text-muted)">System Initialized. 250+ assets indexed successfully.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let cash = 1000000;
+        let countdownTime = 30;
+        const portfolio = {};
+        const stocks = [];
+
+        // --- AUTOMATED MEGA MARKET GENERATOR (Creates ~260 unique stocks) ---
+        function generateMegaMarket() {
+            // Sector lists to autogenerate real-world stock combinations
+            const tech = ['AAPL','MSFT','NVDA','AMZN','GOOGL','TSLA','AMD','INTC','NFLX','META','CSCO','ORAC','ADBE','CRM','IBM','SONY','ASML','QCOM','TXN','AVGO'];
+            const finance = ['JPM','BAC','WFC','C','GS','MS','AXP','V','MA','HSBC','DB','UBS','BLK','PYPL','SQ','COIN','BRK.A','HOOD','SCHW','ALL'];
+            const IndianBluechip = ['RELIANCE','TCS','INFY','HDFCBANK','ICICIBANK','WIT','HINDUNILVR','ITC','SBIN','BHARTIARTL','LTIM','BAJFINANCE','MARUTI','TATAMOTORS','WIPRO','HCLTECH','SUNPHARMA','NTPC','ONGC','COALINDIA'];
+            const crypto = ['BTC','ETH','SOL','XRP','ADA','DOT','DOGE','AVAX','LINK','MATIC','UNI','LTC','ATOM','XLM','ALGO','HBAR','ICP','NEAR','GRT','STX'];
+            
+            // Loop generators to rapidly multiply assets with unique tickers/names
+            const prefixes = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'];
+            
+            // 1. Load Hardcoded Main Tech & Finance Stocks
+            tech.forEach(t => stocks.push({ ticker: t, name: t + " Global Technologies", price: Math.floor(Math.random() * 800) + 40, prevPrice: 0 }));
+            finance.forEach(f => stocks.push({ ticker: f, name: f + " Financial Holdings", price: Math.floor(Math.random() * 400) + 20, prevPrice: 0 }));
+            IndianBluechip.forEach(i => stocks.push({ ticker: i + ".NS", name: i + " Industries Ltd.", price: Math.floor(Math.random() * 3000) + 150, prevPrice: 0 }));
+            crypto.forEach(c => stocks.push({ ticker: c + "-USD", name: c + " Decentralized Asset", price: Math.floor(Math.random() * 1200) + 5, prevPrice: 0 }));
+
+            // 2. Generate remaining up to ~260 systematically to maintain performance
+            for (let i = 0; i < 170; i++) {
+                const pre = prefixes[i % prefixes.length];
+                const num = 100 + i;
+                const ticker = `${pre}${num}`;
+                stocks.push({
+                    ticker: ticker,
+                    name: `Global Corpmart Sector ${pre}-${num}`,
+                    price: parseFloat((Math.random() * 250 + 10).toFixed(2)),
+                    prevPrice: 0
+                });
+            }
+
+            // Sync prevPrices initially
+            stocks.forEach(s => s.prevPrice = s.price);
+        }
+
+        function formatCurr(num) {
+            return '$' + num.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function updateMarketDOM() {
+            const tbody = document.getElementById('market-table-body');
+            const searchQuery = document.getElementById('search-stock').value.trim().toUpperCase();
+            tbody.innerHTML = '';
+
+            stocks.forEach(stock => {
+                // Search filter logic
+                if (searchQuery && !stock.ticker.includes(searchQuery) && !stock.name.toUpperCase().includes(searchQuery)) {
+                    return; 
+                }
+
+                const change = stock.price - stock.prevPrice;
+                const changePercent = stock.prevPrice !== 0 ? (change / stock.prevPrice) * 100 : 0;
+                const priceClass = change >= 0 ? 'price-up' : 'price-down';
+                const sign = change >= 0 ? '+' : '';
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="ticker">${stock.ticker}</td>
+                    <td style="color: var(--text-muted); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${stock.name}</td>
+                    <td class="${priceClass}">${formatCurr(stock.price)}</td>
+                    <td class="${priceClass}">${sign}${changePercent.toFixed(2)}%</td>
+                    <td>
+                        <button class="btn btn-buy" onclick="trade('${stock.ticker}', 'BUY', 10)">BUY 10</button>
+                        <button class="btn btn-buy" onclick="trade('${stock.ticker}', 'BUY', 100)">x100</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        function updatePortfolioDOM() {
+            const tbody = document.getElementById('portfolio-table-body');
+            tbody.innerHTML = '';
+
+            let totalPortfolioValue = 0;
+            const heldTickers = Object.keys(portfolio).filter(t => portfolio[t] > 0);
+
+            if (heldTickers.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="color: var(--text-muted); text-align: center;">No assets held.</td></tr>`;
+            } else {
+                heldTickers.forEach(ticker => {
+                    const stock = stocks.find(s => s.ticker === ticker);
+                    const value = portfolio[ticker] * stock.price;
+                    totalPortfolioValue += value;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="ticker">${ticker}</td>
+                        <td>${portfolio[ticker]}</td>
+                        <td>${formatCurr(value)}</td>
+                        <td>
+                            <button class="btn btn-sell" onclick="trade('${ticker}', 'SELL', 10)">SELL 10</button>
+                            <button class="btn btn-sell" onclick="trade('${ticker}', 'SELL', ${portfolio[ticker]})">ALL</button>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            }
+
+            document.getElementById('cash').innerText = formatCurr(cash);
+            document.getElementById('portfolio-val').innerText = formatCurr(totalPortfolioValue);
+            document.getElementById('net-worth').innerText = formatCurr(cash + totalPortfolioValue);
+        }
+
+        function trade(ticker, type, amount) {
+            const stock = stocks.find(s => s.ticker === ticker);
+            const totalCost = stock.price * amount;
+
+            if (type === 'BUY') {
+                if (cash >= totalCost) {
+                    cash -= totalCost;
+                    portfolio[ticker] = (portfolio[ticker] || 0) + amount;
+                    logAction(`Bought ${amount} shares of ${ticker} for ${formatCurr(totalCost)}`);
+                } else {
+                    logAction(`ERROR: Insufficient funds to buy ${amount} shares of ${ticker}`, true);
+                }
+            } else if (type === 'SELL') {
+                if (portfolio[ticker] && portfolio[ticker] >= amount) {
+                    cash += totalCost;
+                    portfolio[ticker] -= amount;
+                    logAction(`Sold ${amount} shares of ${ticker} for ${formatCurr(totalCost)}`);
+                } else {
+                    logAction(`ERROR: You do not own enough shares of ${ticker}`, true);
+                }
+            }
+            updatePortfolioDOM();
+        }
+
+        function addNewStock() {
+            const tickerInput = document.getElementById('new-ticker');
+            const nameInput = document.getElementById('new-name');
+            const priceInput = document.getElementById('new-price');
+
+            const ticker = tickerInput.value.trim().toUpperCase();
+            const name = nameInput.value.trim();
+            const price = parseFloat(priceInput.value);
+
+            if (!ticker || !name || isNaN(price) || price <= 0) {
+                logAction("ERROR: Invalid listing parameters.", true);
+                return;
+            }
+            if (stocks.some(s => s.ticker === ticker)) {
+                logAction(`ERROR: Ticker [${ticker}] already exists.`, true);
+                return;
+            }
+
+            stocks.unshift({ ticker: ticker, name: name, price: price, prevPrice: price });
+            logAction(`SUCCESS: Listed ${ticker} at ${formatCurr(price)}`);
+            
+            tickerInput.value = ''; nameInput.value = ''; priceInput.value = '';
+            updateMarketDOM();
+        }
+
+        function logAction(msg, isError = false) {
+            const logBox = document.getElementById('log-box');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            if (isError) entry.style.borderColor = 'var(--neon-red)';
+            entry.innerText = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function simulateMarket() {
+            stocks.forEach(stock => {
+                stock.prevPrice = stock.price;
+                const volatility = 0.04; 
+                const changePercent = 2 * volatility * Math.random() - volatility + 0.001; 
+                stock.price = Math.max(0.1, stock.price * (1 + changePercent));
+            });
+            logAction("Global market index recalculated (250+ tickers ticked).");
+            updateMarketDOM();
+            updatePortfolioDOM();
+        }
+
+        // Gameloop Interval
+        setInterval(() => {
+            countdownTime--;
+            if (countdownTime <= 0) {
+                simulateMarket();
+                countdownTime = 30;
+            }
+            document.getElementById('countdown').innerText = countdownTime + 's';
+        }, 1000);
+
+        // Run Engine
+        generateMegaMarket();
+        updateMarketDOM();
+        updatePortfolioDOM();
+    </script>
+</body>
+</html>
